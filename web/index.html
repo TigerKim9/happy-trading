@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Exchange - 감정 거래소</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #e6edf3; }
+
+        .header { background: #161b22; padding: 12px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 20px; font-weight: 700; color: #58a6ff; }
+        .nav { display: flex; gap: 20px; }
+        .nav a { color: #8b949e; text-decoration: none; font-size: 14px; }
+        .nav a:hover, .nav a.active { color: #e6edf3; }
+
+        .wallet-btn { background: #238636; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .wallet-btn:hover { background: #2ea043; }
+        .wallet-btn.connected { background: #30363d; }
+
+        .container { display: grid; grid-template-columns: 280px 1fr 320px; gap: 1px; background: #30363d; min-height: calc(100vh - 53px); }
+
+        .panel { background: #0d1117; padding: 16px; }
+        .panel-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #8b949e; }
+
+        /* Emotion List */
+        .emotion-list { max-height: 400px; overflow-y: auto; }
+        .emotion-item { display: flex; justify-content: space-between; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 4px; }
+        .emotion-item:hover { background: #161b22; }
+        .emotion-item.selected { background: #1f6feb33; }
+        .emotion-name { font-weight: 500; }
+        .emotion-price { color: #8b949e; font-size: 13px; }
+        .emotion-change { font-size: 12px; }
+        .emotion-change.up { color: #3fb950; }
+        .emotion-change.down { color: #f85149; }
+
+        /* Order Book */
+        .orderbook { display: flex; flex-direction: column; gap: 8px; }
+        .orderbook-header { display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 11px; color: #8b949e; padding: 4px 0; }
+        .orderbook-row { display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 12px; padding: 2px 0; }
+        .asks { color: #f85149; }
+        .bids { color: #3fb950; }
+        .spread { text-align: center; padding: 8px; background: #161b22; border-radius: 4px; font-size: 13px; }
+
+        /* Trading Panel */
+        .trade-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .trade-tab { flex: 1; padding: 8px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 13px; background: #21262d; }
+        .trade-tab.active { background: #1f6feb; }
+        .trade-tab.buy { color: #3fb950; }
+        .trade-tab.sell { color: #f85149; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #30363d; border-radius: 6px; background: #161b22; color: #e6edf3; font-size: 13px; }
+
+        .order-type-btns { display: flex; gap: 4px; margin-bottom: 12px; }
+        .order-type-btn { flex: 1; padding: 6px; text-align: center; border-radius: 4px; cursor: pointer; font-size: 11px; background: #21262d; border: 1px solid #30363d; color: #8b949e; }
+        .order-type-btn.active { background: #30363d; color: #e6edf3; border-color: #8b949e; }
+
+        .submit-btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .submit-btn.buy { background: #238636; color: white; }
+        .submit-btn.sell { background: #da3633; color: white; }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Portfolio */
+        .portfolio-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #21262d; }
+        .portfolio-item:last-child { border: none; }
+
+        /* Rankings */
+        .ranking-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #21262d; }
+        .ranking-rank { width: 24px; text-align: center; font-weight: 600; }
+        .ranking-rank.top { color: #f0883e; }
+        .ranking-info { flex: 1; }
+        .ranking-username { font-size: 13px; }
+        .ranking-pnl { font-size: 12px; }
+        .ranking-pnl.positive { color: #3fb950; }
+        .ranking-pnl.negative { color: #f85149; }
+
+        /* Recent Trades */
+        .trade-item { display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 12px; padding: 4px 0; }
+        .trade-item .price { font-weight: 500; }
+
+        /* User Info */
+        .user-info { background: #161b22; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
+        .user-balance { font-size: 20px; font-weight: 600; }
+        .user-address { font-size: 11px; color: #8b949e; margin-top: 4px; }
+
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 1px solid #30363d; margin-bottom: 12px; }
+        .tab { padding: 8px 12px; cursor: pointer; font-size: 13px; color: #8b949e; border-bottom: 2px solid transparent; }
+        .tab:hover { color: #e6edf3; }
+        .tab.active { color: #e6edf3; border-color: #f78166; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0d1117; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 6px; font-size: 13px; z-index: 1000; }
+        .toast.success { background: #238636; color: white; }
+        .toast.error { background: #da3633; color: white; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Emotion Exchange</div>
+        <div class="nav">
+            <a href="#" class="active">거래</a>
+            <a href="#rankings">랭킹</a>
+            <a href="/admin/admin.html">관리자</a>
+        </div>
+        <button class="wallet-btn" id="walletBtn" onclick="connectWallet()">지갑 연결</button>
+    </div>
+
+    <div class="container">
+        <!-- Left Panel - Emotion List -->
+        <div class="panel">
+            <div class="panel-title">감정 목록</div>
+            <div class="emotion-list" id="emotionList"></div>
+
+            <div class="panel-title" style="margin-top: 20px;">내 포트폴리오</div>
+            <div id="portfolio"></div>
+        </div>
+
+        <!-- Center Panel - Order Book & Trading -->
+        <div class="panel">
+            <div class="tabs">
+                <div class="tab active" data-tab="orderbook">호가창</div>
+                <div class="tab" data-tab="trades">체결내역</div>
+                <div class="tab" data-tab="chart">차트</div>
+            </div>
+
+            <div id="orderbookPanel">
+                <div class="orderbook-header">
+                    <span>가격</span>
+                    <span style="text-align: center;">수량</span>
+                    <span style="text-align: right;">합계</span>
+                </div>
+                <div class="orderbook">
+                    <div id="asks"></div>
+                    <div class="spread" id="spread">-</div>
+                    <div id="bids"></div>
+                </div>
+            </div>
+
+            <div id="tradesPanel" style="display: none;">
+                <div class="orderbook-header">
+                    <span>가격</span>
+                    <span style="text-align: center;">수량</span>
+                    <span style="text-align: right;">시간</span>
+                </div>
+                <div id="recentTrades"></div>
+            </div>
+
+            <div id="chartPanel" style="display: none; text-align: center; padding: 40px; color: #8b949e;">
+                차트 데이터 준비중
+            </div>
+        </div>
+
+        <!-- Right Panel - Order Form & Rankings -->
+        <div class="panel">
+            <div class="user-info" id="userInfo" style="display: none;">
+                <div class="user-balance" id="userBalance">0.00</div>
+                <div class="user-address" id="userAddress"></div>
+            </div>
+
+            <div class="panel-title">주문</div>
+            <div class="trade-tabs">
+                <div class="trade-tab buy active" onclick="setOrderSide('buy')">매수</div>
+                <div class="trade-tab sell" onclick="setOrderSide('sell')">매도</div>
+            </div>
+
+            <div class="order-type-btns">
+                <div class="order-type-btn active" onclick="setOrderType('limit')">지정가</div>
+                <div class="order-type-btn" onclick="setOrderType('market')">시장가</div>
+                <div class="order-type-btn" onclick="setOrderType('stop_loss')">스탑로스</div>
+            </div>
+
+            <form id="orderForm" onsubmit="placeOrder(event)">
+                <div class="form-group" id="priceGroup">
+                    <label>가격</label>
+                    <input type="number" id="orderPrice" step="0.01" required>
+                </div>
+                <div class="form-group" id="stopPriceGroup" style="display: none;">
+                    <label>스탑 가격</label>
+                    <input type="number" id="stopPrice" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>수량</label>
+                    <input type="number" id="orderQuantity" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>총액</label>
+                    <input type="text" id="orderTotal" readonly>
+                </div>
+                <div style="font-size: 11px; color: #8b949e; margin-bottom: 8px;">
+                    수수료: Maker 0.1% / Taker 0.2%
+                </div>
+                <button type="submit" class="submit-btn buy" id="submitBtn" disabled>지갑을 연결하세요</button>
+            </form>
+
+            <div class="panel-title" style="margin-top: 24px;">랭킹 TOP 10</div>
+            <div id="rankings"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentUser = null;
+        let selectedEmotion = null;
+        let orderSide = 'buy';
+        let orderType = 'limit';
+        let emotions = [];
+        let ws = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEmotions();
+            loadRankings();
+            setupTabs();
+            setupOrderForm();
+        });
+
+        // Wallet Connection
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                showToast('MetaMask를 설치해주세요', 'error');
+                return;
+            }
+
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const address = accounts[0];
+
+                // Get nonce
+                const nonceRes = await fetch(`${API_BASE}/wallet/nonce?address=${address}`);
+                const { nonce, message } = await nonceRes.json();
+
+                // Sign message
+                const signature = await window.ethereum.request({
+                    method: 'personal_sign',
+                    params: [message, address]
+                });
+
+                // Login
+                const loginRes = await fetch(`${API_BASE}/wallet/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address, nonce, signature })
+                });
+
+                const { user } = await loginRes.json();
+                currentUser = user;
+
+                updateWalletUI();
+                connectWebSocket();
+                showToast('지갑이 연결되었습니다', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function updateWalletUI() {
+            const btn = document.getElementById('walletBtn');
+            const userInfo = document.getElementById('userInfo');
+
+            if (currentUser) {
+                btn.textContent = currentUser.wallet_address.slice(0, 6) + '...' + currentUser.wallet_address.slice(-4);
+                btn.classList.add('connected');
+                userInfo.style.display = 'block';
+                document.getElementById('userBalance').textContent = currentUser.balance.toFixed(2);
+                document.getElementById('userAddress').textContent = currentUser.wallet_address;
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('submitBtn').textContent = orderSide === 'buy' ? '매수' : '매도';
+            }
+        }
+
+        // Load Emotions
+        async function loadEmotions() {
+            const res = await fetch(`${API_BASE}/emotions`);
+            emotions = await res.json();
+
+            const list = document.getElementById('emotionList');
+            list.innerHTML = emotions.map(e => `
+                <div class="emotion-item" onclick="selectEmotion('${e.id}')">
+                    <div>
+                        <div class="emotion-name">${e.name_kr}</div>
+                        <div class="emotion-price">${e.base_price.toFixed(2)}</div>
+                    </div>
+                    <div class="emotion-change up">+0.00%</div>
+                </div>
+            `).join('');
+
+            if (emotions.length > 0) {
+                selectEmotion(emotions[0].id);
+            }
+        }
+
+        // Select Emotion
+        async function selectEmotion(emotionId) {
+            selectedEmotion = emotions.find(e => e.id === emotionId);
+
+            document.querySelectorAll('.emotion-item').forEach((el, i) => {
+                el.classList.toggle('selected', emotions[i].id === emotionId);
+            });
+
+            document.getElementById('orderPrice').value = selectedEmotion.base_price;
+            loadOrderBook();
+            loadRecentTrades();
+        }
+
+        // Load Order Book
+        async function loadOrderBook() {
+            if (!selectedEmotion) return;
+
+            const res = await fetch(`${API_BASE}/orderbook?emotion_id=${selectedEmotion.id}&depth=10`);
+            const ob = await res.json();
+
+            const asks = document.getElementById('asks');
+            const bids = document.getElementById('bids');
+
+            asks.innerHTML = (ob.asks || []).slice(0, 8).reverse().map(a => `
+                <div class="orderbook-row asks">
+                    <span>${a.price.toFixed(2)}</span>
+                    <span style="text-align: center;">${a.quantity.toFixed(2)}</span>
+                    <span style="text-align: right;">${(a.price * a.quantity).toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            bids.innerHTML = (ob.bids || []).slice(0, 8).map(b => `
+                <div class="orderbook-row bids">
+                    <span>${b.price.toFixed(2)}</span>
+                    <span style="text-align: center;">${b.quantity.toFixed(2)}</span>
+                    <span style="text-align: right;">${(b.price * b.quantity).toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            // Update spread
+            const bestAsk = ob.asks?.[0]?.price || 0;
+            const bestBid = ob.bids?.[0]?.price || 0;
+            const spread = bestAsk && bestBid ? ((bestAsk - bestBid) / bestBid * 100).toFixed(2) : '-';
+            document.getElementById('spread').textContent = `스프레드: ${spread}%`;
+        }
+
+        // Load Recent Trades
+        async function loadRecentTrades() {
+            if (!selectedEmotion) return;
+
+            const res = await fetch(`${API_BASE}/trades?emotion_id=${selectedEmotion.id}&limit=20`);
+            const trades = await res.json();
+
+            document.getElementById('recentTrades').innerHTML = (trades || []).map(t => `
+                <div class="trade-item">
+                    <span class="price">${t.price.toFixed(2)}</span>
+                    <span style="text-align: center;">${t.quantity.toFixed(2)}</span>
+                    <span style="text-align: right;">${new Date(t.created_at).toLocaleTimeString()}</span>
+                </div>
+            `).join('');
+        }
+
+        // Load Rankings
+        async function loadRankings() {
+            // Placeholder - API not yet implemented
+            const rankings = document.getElementById('rankings');
+            rankings.innerHTML = '<div style="color: #8b949e; font-size: 12px; padding: 20px 0; text-align: center;">거래 시작 후 랭킹이 표시됩니다</div>';
+        }
+
+        // Order Functions
+        function setOrderSide(side) {
+            orderSide = side;
+            document.querySelectorAll('.trade-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.trade-tab.${side}`).classList.add('active');
+
+            const btn = document.getElementById('submitBtn');
+            btn.className = `submit-btn ${side}`;
+            btn.textContent = currentUser ? (side === 'buy' ? '매수' : '매도') : '지갑을 연결하세요';
+        }
+
+        function setOrderType(type) {
+            orderType = type;
+            document.querySelectorAll('.order-type-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('priceGroup').style.display = type === 'market' ? 'none' : 'block';
+            document.getElementById('stopPriceGroup').style.display = type.includes('stop') ? 'block' : 'none';
+        }
+
+        function setupOrderForm() {
+            const price = document.getElementById('orderPrice');
+            const quantity = document.getElementById('orderQuantity');
+            const total = document.getElementById('orderTotal');
+
+            const updateTotal = () => {
+                const p = parseFloat(price.value) || 0;
+                const q = parseFloat(quantity.value) || 0;
+                total.value = (p * q).toFixed(2);
+            };
+
+            price.addEventListener('input', updateTotal);
+            quantity.addEventListener('input', updateTotal);
+        }
+
+        async function placeOrder(event) {
+            event.preventDefault();
+
+            if (!currentUser || !selectedEmotion) return;
+
+            const order = {
+                user_id: currentUser.id,
+                emotion_id: selectedEmotion.id,
+                side: orderSide,
+                type: orderType,
+                price: parseFloat(document.getElementById('orderPrice').value),
+                quantity: parseFloat(document.getElementById('orderQuantity').value)
+            };
+
+            if (orderType.includes('stop')) {
+                order.stop_price = parseFloat(document.getElementById('stopPrice').value);
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(order)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error);
+                }
+
+                showToast('주문이 접수되었습니다', 'success');
+                loadOrderBook();
+                document.getElementById('orderForm').reset();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        // Tabs
+        function setupTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    const tabName = tab.dataset.tab;
+                    document.getElementById('orderbookPanel').style.display = tabName === 'orderbook' ? 'block' : 'none';
+                    document.getElementById('tradesPanel').style.display = tabName === 'trades' ? 'block' : 'none';
+                    document.getElementById('chartPanel').style.display = tabName === 'chart' ? 'block' : 'none';
+                });
+            });
+        }
+
+        // WebSocket
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                if (selectedEmotion) {
+                    ws.send(JSON.stringify({ type: 'subscribe', channel: `orderbook:${selectedEmotion.id}` }));
+                    ws.send(JSON.stringify({ type: 'subscribe', channel: `trade:${selectedEmotion.id}` }));
+                }
+            };
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                if (msg.type === 'orderbook') {
+                    // Update orderbook
+                } else if (msg.type === 'trade') {
+                    loadRecentTrades();
+                }
+            };
+        }
+
+        // Toast
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

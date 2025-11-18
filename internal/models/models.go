@@ -87,8 +87,11 @@ const (
 type OrderType string
 
 const (
-	LimitOrder  OrderType = "limit"
-	MarketOrder OrderType = "market"
+	LimitOrder      OrderType = "limit"
+	MarketOrder     OrderType = "market"
+	StopLossOrder   OrderType = "stop_loss"
+	TakeProfitOrder OrderType = "take_profit"
+	StopLimitOrder  OrderType = "stop_limit"
 )
 
 // OrderStatus represents the status of an order
@@ -103,30 +106,73 @@ const (
 
 // Order represents a buy/sell order
 type Order struct {
-	ID         string      `json:"id"`
-	UserID     string      `json:"user_id"`
-	EmotionID  string      `json:"emotion_id"`
-	Side       OrderSide   `json:"side"`
-	Type       OrderType   `json:"type"`
-	Price      float64     `json:"price"`
-	Quantity   float64     `json:"quantity"`
-	Filled     float64     `json:"filled"`
-	Status     OrderStatus `json:"status"`
-	CreatedAt  time.Time   `json:"created_at"`
-	UpdatedAt  time.Time   `json:"updated_at"`
+	ID              string      `json:"id"`
+	UserID          string      `json:"user_id"`
+	EmotionID       string      `json:"emotion_id"`
+	Side            OrderSide   `json:"side"`
+	Type            OrderType   `json:"type"`
+	Price           float64     `json:"price"`
+	Quantity        float64     `json:"quantity"`
+	Filled          float64     `json:"filled"`
+	Status          OrderStatus `json:"status"`
+	StopPrice       float64     `json:"stop_price,omitempty"`
+	TakeProfitPrice float64     `json:"take_profit_price,omitempty"`
+	CreatedAt       time.Time   `json:"created_at"`
+	UpdatedAt       time.Time   `json:"updated_at"`
 }
 
 // Trade represents a completed trade
 type Trade struct {
-	ID         string    `json:"id"`
-	BuyOrderID string    `json:"buy_order_id"`
-	SellOrderID string   `json:"sell_order_id"`
-	BuyerID    string    `json:"buyer_id"`
-	SellerID   string    `json:"seller_id"`
-	EmotionID  string    `json:"emotion_id"`
-	Price      float64   `json:"price"`
-	Quantity   float64   `json:"quantity"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	BuyOrderID  string    `json:"buy_order_id"`
+	SellOrderID string    `json:"sell_order_id"`
+	BuyerID     string    `json:"buyer_id"`
+	SellerID    string    `json:"seller_id"`
+	EmotionID   string    `json:"emotion_id"`
+	Price       float64   `json:"price"`
+	Quantity    float64   `json:"quantity"`
+	BuyerFee    float64   `json:"buyer_fee"`
+	SellerFee   float64   `json:"seller_fee"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// FeeConfig represents trading fee configuration
+type FeeConfig struct {
+	MakerFee float64 `json:"maker_fee"` // e.g., 0.001 = 0.1%
+	TakerFee float64 `json:"taker_fee"` // e.g., 0.002 = 0.2%
+}
+
+// DefaultFeeConfig returns default fee configuration
+func DefaultFeeConfig() FeeConfig {
+	return FeeConfig{
+		MakerFee: 0.001, // 0.1%
+		TakerFee: 0.002, // 0.2%
+	}
+}
+
+// Candle represents OHLCV candlestick data
+type Candle struct {
+	EmotionID string    `json:"emotion_id"`
+	Interval  string    `json:"interval"` // 1m, 5m, 15m, 1h, 4h, 1d
+	OpenTime  time.Time `json:"open_time"`
+	Open      float64   `json:"open"`
+	High      float64   `json:"high"`
+	Low       float64   `json:"low"`
+	Close     float64   `json:"close"`
+	Volume    float64   `json:"volume"`
+}
+
+// UserRanking represents user ranking data
+type UserRanking struct {
+	UserID      string    `json:"user_id"`
+	Username    string    `json:"username"`
+	TotalPnL    float64   `json:"total_pnl"`
+	TotalVolume float64   `json:"total_volume"`
+	TradeCount  int       `json:"trade_count"`
+	WinCount    int       `json:"win_count"`
+	WinRate     float64   `json:"win_rate"`
+	Rank        int       `json:"rank"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // StoreItem represents an item in the store

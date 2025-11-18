@@ -6,11 +6,53 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/TigerKim9/happy-trading/internal/auth"
+	"github.com/TigerKim9/happy-trading/internal/database"
 	"github.com/TigerKim9/happy-trading/internal/exchange"
 	"github.com/TigerKim9/happy-trading/internal/handlers"
+	"github.com/TigerKim9/happy-trading/internal/websocket"
 )
 
 func main() {
+	// Initialize database (optional - for production)
+	dbHost := os.Getenv("DB_HOST")
+	if dbHost != "" {
+		dbConfig := database.Config{
+			Host:     dbHost,
+			Port:     getEnvOrDefault("DB_PORT", "5432"),
+			User:     getEnvOrDefault("DB_USER", "postgres"),
+			Password: os.Getenv("DB_PASSWORD"),
+			DBName:   getEnvOrDefault("DB_NAME", "emotion_exchange"),
+			SSLMode:  getEnvOrDefault("DB_SSLMODE", "disable"),
+		}
+		if err := database.Connect(dbConfig); err != nil {
+			log.Printf("Warning: Database connection failed: %v", err)
+			log.Printf("Running in memory-only mode")
+		} else {
+			log.Printf("Connected to PostgreSQL database")
+			if err := database.Migrate(); err != nil {
+				log.Printf("Warning: Database migration failed: %v", err)
+			} else {
+				log.Printf("Database migrations completed")
+			}
+		}
+	} else {
+		log.Printf("Running in memory-only mode (set DB_HOST for PostgreSQL)")
+	}
+
+	// Initialize JWT auth
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "emotion-exchange-secret-key-change-in-production"
+	}
+	auth.Init(jwtSecret)
+	log.Printf("JWT authentication initialized")
+
+	// Initialize WebSocket hub
+	hub := websocket.NewHub()
+	go hub.Run()
+	log.Printf("WebSocket hub started")
+
 	// Initialize exchange
 	ex := exchange.NewExchange()
 
@@ -64,6 +106,20 @@ func main() {
 	// Admin page
 	mux.Handle("GET /admin/", http.StripPrefix("/admin/", http.FileServer(http.Dir("web"))))
 
+	// Trading UI
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		http.ServeFile(w, r, "web/index.html")
+	})
+
+	// WebSocket
+	mux.HandleFunc("GET /ws", func(w http.ResponseWriter, r *http.Request) {
+		hub.ServeWs(w, r)
+	})
+
 	// Wallet
 	mux.HandleFunc("GET /api/wallet/chains", h.GetChains)
 	mux.HandleFunc("GET /api/wallet/nonce", h.GetNonce)
@@ -87,8 +143,10 @@ func main() {
 	printBanner()
 
 	log.Printf("Starting Emotion Exchange server on :%s", port)
+	log.Printf("Trading UI at http://localhost:%s/", port)
 	log.Printf("API available at http://localhost:%s/api", port)
 	log.Printf("Admin page at http://localhost:%s/admin/", port)
+	log.Printf("WebSocket at ws://localhost:%s/ws", port)
 
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		log.Fatal(err)
@@ -108,6 +166,13 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 func printBanner() {
