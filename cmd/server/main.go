@@ -56,6 +56,14 @@ func main() {
 	mux.HandleFunc("POST /api/p2p/accept", h.AcceptP2POffer)
 	mux.HandleFunc("DELETE /api/p2p", h.CancelP2POffer)
 
+	// Admin API
+	mux.HandleFunc("POST /api/admin/emotions", h.AddEmotion)
+	mux.HandleFunc("PUT /api/admin/emotions", h.UpdateEmotion)
+	mux.HandleFunc("DELETE /api/admin/emotions", h.DeleteEmotion)
+
+	// Admin page
+	mux.Handle("GET /admin/", http.StripPrefix("/admin/", http.FileServer(http.Dir("web"))))
+
 	// CORS middleware
 	handler := corsMiddleware(mux)
 
@@ -70,6 +78,7 @@ func main() {
 
 	log.Printf("Starting Emotion Exchange server on :%s", port)
 	log.Printf("API available at http://localhost:%s/api", port)
+	log.Printf("Admin page at http://localhost:%s/admin/", port)
 
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		log.Fatal(err)

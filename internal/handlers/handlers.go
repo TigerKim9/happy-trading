@@ -341,3 +341,66 @@ func (h *Handler) GetP2POffers(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, offers)
 }
+
+// Admin handlers
+func (h *Handler) AddEmotion(w http.ResponseWriter, r *http.Request) {
+	var emotion models.Emotion
+
+	if err := json.NewDecoder(r.Body).Decode(&emotion); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if emotion.ID == "" || emotion.Name == "" || emotion.NameKR == "" {
+		writeError(w, http.StatusBadRequest, "id, name, and name_kr are required")
+		return
+	}
+
+	if emotion.BasePrice <= 0 {
+		writeError(w, http.StatusBadRequest, "base_price must be positive")
+		return
+	}
+
+	if err := h.exchange.AddEmotion(emotion); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, emotion)
+}
+
+func (h *Handler) UpdateEmotion(w http.ResponseWriter, r *http.Request) {
+	var emotion models.Emotion
+
+	if err := json.NewDecoder(r.Body).Decode(&emotion); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if emotion.ID == "" {
+		writeError(w, http.StatusBadRequest, "id is required")
+		return
+	}
+
+	if err := h.exchange.UpdateEmotion(emotion); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, emotion)
+}
+
+func (h *Handler) DeleteEmotion(w http.ResponseWriter, r *http.Request) {
+	emotionID := r.URL.Query().Get("id")
+	if emotionID == "" {
+		writeError(w, http.StatusBadRequest, "id is required")
+		return
+	}
+
+	if err := h.exchange.DeleteEmotion(emotionID); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}

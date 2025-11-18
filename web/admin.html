@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Exchange - Admin</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #fff;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4338ca;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-secondary {
+            background: #374151;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .table-container {
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background: #252525;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        tr:hover {
+            background: #252525;
+        }
+
+        .category-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .category-basic {
+            background: #065f46;
+            color: #6ee7b7;
+        }
+
+        .category-dark {
+            background: #7c2d12;
+            color: #fdba74;
+        }
+
+        .category-chaotic {
+            background: #581c87;
+            color: #d8b4fe;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid #333;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background: #252525;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .stat-card h3 {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-success {
+            background: #059669;
+        }
+
+        .toast-error {
+            background: #dc2626;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>Emotion Exchange Admin</h1>
+            <p>거래 가능한 감정을 관리합니다</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <h3>총 감정</h3>
+                <div class="value" id="totalEmotions">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>기본 감정</h3>
+                <div class="value" id="basicCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>다크 감정</h3>
+                <div class="value" id="darkCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>카오틱 감정</h3>
+                <div class="value" id="chaoticCount">0</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <h2>감정 목록</h2>
+            <button class="btn btn-primary" onclick="openAddModal()">+ 새 감정 추가</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>이름</th>
+                        <th>한글명</th>
+                        <th>카테고리</th>
+                        <th>기준가</th>
+                        <th>설명</th>
+                        <th>관리</th>
+                    </tr>
+                </thead>
+                <tbody id="emotionTable">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">로딩 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="emotionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">새 감정 추가</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="emotionForm" onsubmit="saveEmotion(event)">
+                <input type="hidden" id="editMode" value="add">
+                <div class="form-group">
+                    <label for="emotionId">ID (영문)</label>
+                    <input type="text" id="emotionId" required placeholder="예: excitement">
+                </div>
+                <div class="form-group">
+                    <label for="emotionName">영문명</label>
+                    <input type="text" id="emotionName" required placeholder="예: Excitement">
+                </div>
+                <div class="form-group">
+                    <label for="emotionNameKr">한글명</label>
+                    <input type="text" id="emotionNameKr" required placeholder="예: 흥분">
+                </div>
+                <div class="form-group">
+                    <label for="emotionCategory">카테고리</label>
+                    <select id="emotionCategory" required>
+                        <option value="basic">기본 (Basic)</option>
+                        <option value="dark">다크 (Dark)</option>
+                        <option value="chaotic">카오틱 (Chaotic)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="emotionPrice">기준가</label>
+                    <input type="number" id="emotionPrice" required min="1" step="0.01" placeholder="예: 100">
+                </div>
+                <div class="form-group">
+                    <label for="emotionDesc">설명</label>
+                    <textarea id="emotionDesc" rows="3" required placeholder="감정에 대한 설명"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>감정 삭제</h2>
+                <button class="close-btn" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <p style="margin-bottom: 20px;">정말로 <strong id="deleteEmotionName"></strong>을(를) 삭제하시겠습니까?</p>
+            <p style="margin-bottom: 20px; color: #f87171;">이 작업은 되돌릴 수 없습니다.</p>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">취소</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let emotions = [];
+        let deleteTargetId = null;
+
+        // Load emotions on page load
+        document.addEventListener('DOMContentLoaded', loadEmotions);
+
+        async function loadEmotions() {
+            try {
+                const response = await fetch(`${API_BASE}/emotions`);
+                emotions = await response.json();
+                renderTable();
+                updateStats();
+            } catch (error) {
+                showToast('감정 목록을 불러오는데 실패했습니다', 'error');
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('emotionTable');
+
+            if (emotions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">등록된 감정이 없습니다</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = emotions.map(emotion => `
+                <tr>
+                    <td><code>${emotion.id}</code></td>
+                    <td>${emotion.name}</td>
+                    <td>${emotion.name_kr}</td>
+                    <td><span class="category-badge category-${emotion.category}">${getCategoryLabel(emotion.category)}</span></td>
+                    <td>${emotion.base_price.toLocaleString()}</td>
+                    <td>${emotion.description}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn btn-secondary btn-sm" onclick="editEmotion('${emotion.id}')">수정</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteEmotion('${emotion.id}', '${emotion.name_kr}')">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getCategoryLabel(category) {
+            const labels = {
+                'basic': '기본',
+                'dark': '다크',
+                'chaotic': '카오틱'
+            };
+            return labels[category] || category;
+        }
+
+        function updateStats() {
+            document.getElementById('totalEmotions').textContent = emotions.length;
+            document.getElementById('basicCount').textContent = emotions.filter(e => e.category === 'basic').length;
+            document.getElementById('darkCount').textContent = emotions.filter(e => e.category === 'dark').length;
+            document.getElementById('chaoticCount').textContent = emotions.filter(e => e.category === 'chaotic').length;
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = '새 감정 추가';
+            document.getElementById('editMode').value = 'add';
+            document.getElementById('emotionId').disabled = false;
+            document.getElementById('emotionForm').reset();
+            document.getElementById('emotionModal').classList.add('active');
+        }
+
+        function editEmotion(id) {
+            const emotion = emotions.find(e => e.id === id);
+            if (!emotion) return;
+
+            document.getElementById('modalTitle').textContent = '감정 수정';
+            document.getElementById('editMode').value = 'edit';
+            document.getElementById('emotionId').value = emotion.id;
+            document.getElementById('emotionId').disabled = true;
+            document.getElementById('emotionName').value = emotion.name;
+            document.getElementById('emotionNameKr').value = emotion.name_kr;
+            document.getElementById('emotionCategory').value = emotion.category;
+            document.getElementById('emotionPrice').value = emotion.base_price;
+            document.getElementById('emotionDesc').value = emotion.description;
+            document.getElementById('emotionModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('emotionModal').classList.remove('active');
+        }
+
+        async function saveEmotion(event) {
+            event.preventDefault();
+
+            const editMode = document.getElementById('editMode').value;
+            const emotion = {
+                id: document.getElementById('emotionId').value,
+                name: document.getElementById('emotionName').value,
+                name_kr: document.getElementById('emotionNameKr').value,
+                category: document.getElementById('emotionCategory').value,
+                base_price: parseFloat(document.getElementById('emotionPrice').value),
+                description: document.getElementById('emotionDesc').value
+            };
+
+            try {
+                const url = `${API_BASE}/admin/emotions`;
+                const method = editMode === 'add' ? 'POST' : 'PUT';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(emotion)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '저장 실패');
+                }
+
+                closeModal();
+                await loadEmotions();
+                showToast(editMode === 'add' ? '감정이 추가되었습니다' : '감정이 수정되었습니다', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function deleteEmotion(id, name) {
+            deleteTargetId = id;
+            document.getElementById('deleteEmotionName').textContent = name;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deleteTargetId = null;
+        }
+
+        async function confirmDelete() {
+            if (!deleteTargetId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/emotions?id=${deleteTargetId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || '삭제 실패');
+                }
+
+                closeDeleteModal();
+                await loadEmotions();
+                showToast('감정이 삭제되었습니다', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

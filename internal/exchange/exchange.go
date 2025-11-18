@@ -14,6 +14,7 @@ import (
 var (
 	ErrUserNotFound       = errors.New("user not found")
 	ErrEmotionNotFound    = errors.New("emotion not found")
+	ErrEmotionExists      = errors.New("emotion already exists")
 	ErrInsufficientFunds  = errors.New("insufficient funds")
 	ErrInsufficientAssets = errors.New("insufficient assets")
 	ErrInvalidOrder       = errors.New("invalid order")
@@ -365,6 +366,59 @@ func (ex *Exchange) GetP2POffers() []models.P2PTrade {
 
 func (ex *Exchange) GetP2POffersByEmotion(emotionID string) []models.P2PTrade {
 	return ex.p2pMarket.GetOffersByEmotion(emotionID)
+}
+
+// Admin: Emotion management
+func (ex *Exchange) AddEmotion(emotion models.Emotion) error {
+	ex.mu.Lock()
+	defer ex.mu.Unlock()
+
+	if _, exists := ex.emotions[emotion.ID]; exists {
+		return ErrEmotionExists
+	}
+
+	ex.emotions[emotion.ID] = emotion
+	ex.orderBooks[emotion.ID] = orderbook.NewBook(emotion.ID, emotion.BasePrice)
+
+	return nil
+}
+
+func (ex *Exchange) UpdateEmotion(emotion models.Emotion) error {
+	ex.mu.Lock()
+	defer ex.mu.Unlock()
+
+	if _, exists := ex.emotions[emotion.ID]; !exists {
+		return ErrEmotionNotFound
+	}
+
+	ex.emotions[emotion.ID] = emotion
+	return nil
+}
+
+func (ex *Exchange) DeleteEmotion(emotionID string) error {
+	ex.mu.Lock()
+	defer ex.mu.Unlock()
+
+	if _, exists := ex.emotions[emotionID]; !exists {
+		return ErrEmotionNotFound
+	}
+
+	delete(ex.emotions, emotionID)
+	delete(ex.orderBooks, emotionID)
+
+	return nil
+}
+
+func (ex *Exchange) GetEmotion(emotionID string) (*models.Emotion, error) {
+	ex.mu.RLock()
+	defer ex.mu.RUnlock()
+
+	emotion, exists := ex.emotions[emotionID]
+	if !exists {
+		return nil, ErrEmotionNotFound
+	}
+
+	return &emotion, nil
 }
 
 // Helper functions
