@@ -9,6 +9,7 @@ import (
 	"github.com/TigerKim9/happy-trading/internal/orderbook"
 	"github.com/TigerKim9/happy-trading/internal/p2p"
 	"github.com/TigerKim9/happy-trading/internal/store"
+	"github.com/TigerKim9/happy-trading/internal/wallet"
 )
 
 var (
@@ -22,25 +23,27 @@ var (
 
 // Exchange is the main trading engine
 type Exchange struct {
-	emotions   map[string]models.Emotion
-	users      map[string]*models.User
-	orderBooks map[string]*orderbook.Book
-	store      *store.Store
-	p2pMarket  *p2p.P2PMarket
-	orders     map[string]*models.Order
-	mu         sync.RWMutex
-	orderIDCtr int64
+	emotions      map[string]models.Emotion
+	users         map[string]*models.User
+	orderBooks    map[string]*orderbook.Book
+	store         *store.Store
+	p2pMarket     *p2p.P2PMarket
+	walletService *wallet.WalletService
+	orders        map[string]*models.Order
+	mu            sync.RWMutex
+	orderIDCtr    int64
 }
 
 // NewExchange creates a new exchange
 func NewExchange() *Exchange {
 	ex := &Exchange{
-		emotions:   make(map[string]models.Emotion),
-		users:      make(map[string]*models.User),
-		orderBooks: make(map[string]*orderbook.Book),
-		store:      store.NewStore(),
-		p2pMarket:  p2p.NewP2PMarket(),
-		orders:     make(map[string]*models.Order),
+		emotions:      make(map[string]models.Emotion),
+		users:         make(map[string]*models.User),
+		orderBooks:    make(map[string]*orderbook.Book),
+		store:         store.NewStore(),
+		p2pMarket:     p2p.NewP2PMarket(),
+		walletService: wallet.NewWalletService(),
+		orders:        make(map[string]*models.Order),
 	}
 
 	// Initialize emotions
@@ -50,6 +53,79 @@ func NewExchange() *Exchange {
 	}
 
 	return ex
+}
+
+// Wallet operations
+func (ex *Exchange) GetNonce(address string) (string, error) {
+	return ex.walletService.GenerateNonce(address)
+}
+
+func (ex *Exchange) GetSignMessage(nonce string) string {
+	return ex.walletService.GetSignMessage(nonce)
+}
+
+func (ex *Exchange) WalletLogin(address, nonce, signature string) (*models.User, bool, error) {
+	// Verify signature
+	if err := ex.walletService.VerifySignature(address, nonce, signature); err != nil {
+		return nil, false, err
+	}
+
+	// Get or create user
+	user, isNew, err := ex.walletService.GetOrCreateUser(address)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Also store in exchange users map
+	ex.mu.Lock()
+	ex.users[user.ID] = user
+	ex.mu.Unlock()
+
+	return user, isNew, nil
+}
+
+func (ex *Exchange) GetSupportedChains() []models.Chain {
+	return models.SupportedChains()
+}
+
+func (ex *Exchange) GetDepositAddress(chainID int64) string {
+	return ex.walletService.GetDepositAddress(chainID)
+}
+
+func (ex *Exchange) RegisterDeposit(userID string, chainID int64, txHash string, amount float64) (*models.Deposit, error) {
+	return ex.walletService.RegisterDeposit(userID, chainID, txHash, amount)
+}
+
+func (ex *Exchange) ConfirmDeposit(depositID, userID string) error {
+	ex.mu.Lock()
+	defer ex.mu.Unlock()
+
+	user, exists := ex.users[userID]
+	if !exists {
+		return ErrUserNotFound
+	}
+
+	return ex.walletService.ConfirmDeposit(depositID, user)
+}
+
+func (ex *Exchange) GetUserDeposits(userID string) []models.Deposit {
+	return ex.walletService.GetUserDeposits(userID)
+}
+
+func (ex *Exchange) RequestWithdrawal(userID string, chainID int64, toAddress string, amount float64) (*models.Withdrawal, error) {
+	ex.mu.Lock()
+	defer ex.mu.Unlock()
+
+	user, exists := ex.users[userID]
+	if !exists {
+		return nil, ErrUserNotFound
+	}
+
+	return ex.walletService.RequestWithdrawal(userID, chainID, toAddress, amount, user)
+}
+
+func (ex *Exchange) GetUserWithdrawals(userID string) []models.Withdrawal {
+	return ex.walletService.GetUserWithdrawals(userID)
 }
 
 // CreateUser creates a new user with initial balance

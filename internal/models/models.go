@@ -19,11 +19,60 @@ type Emotion struct {
 
 // User represents a trader
 type User struct {
-	ID        string             `json:"id"`
-	Username  string             `json:"username"`
-	Balance   float64            `json:"balance"`
-	Portfolio map[string]float64 `json:"portfolio"` // emotion_id -> quantity
-	CreatedAt time.Time          `json:"created_at"`
+	ID            string             `json:"id"`
+	Username      string             `json:"username"`
+	WalletAddress string             `json:"wallet_address,omitempty"` // EVM wallet address
+	Balance       float64            `json:"balance"`
+	Portfolio     map[string]float64 `json:"portfolio"`  // emotion_id -> quantity
+	Nonce         string             `json:"nonce"`      // for signature verification
+	CreatedAt     time.Time          `json:"created_at"`
+}
+
+// Chain represents a supported blockchain
+type Chain struct {
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	Symbol   string `json:"symbol"`
+	RPC      string `json:"rpc"`
+	Explorer string `json:"explorer"`
+}
+
+// Deposit represents a deposit transaction
+type Deposit struct {
+	ID          string    `json:"id"`
+	UserID      string    `json:"user_id"`
+	ChainID     int64     `json:"chain_id"`
+	TxHash      string    `json:"tx_hash"`
+	Amount      float64   `json:"amount"`
+	Status      string    `json:"status"` // pending, confirmed, failed
+	CreatedAt   time.Time `json:"created_at"`
+	ConfirmedAt *time.Time `json:"confirmed_at,omitempty"`
+}
+
+// Withdrawal represents a withdrawal request
+type Withdrawal struct {
+	ID          string     `json:"id"`
+	UserID      string     `json:"user_id"`
+	ChainID     int64      `json:"chain_id"`
+	ToAddress   string     `json:"to_address"`
+	Amount      float64    `json:"amount"`
+	TxHash      string     `json:"tx_hash,omitempty"`
+	Status      string     `json:"status"` // pending, processing, completed, failed
+	CreatedAt   time.Time  `json:"created_at"`
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+}
+
+// SupportedChains returns the list of supported EVM chains
+func SupportedChains() []Chain {
+	return []Chain{
+		{ID: 1, Name: "Ethereum", Symbol: "ETH", RPC: "https://eth.llamarpc.com", Explorer: "https://etherscan.io"},
+		{ID: 137, Name: "Polygon", Symbol: "MATIC", RPC: "https://polygon-rpc.com", Explorer: "https://polygonscan.com"},
+		{ID: 42161, Name: "Arbitrum", Symbol: "ETH", RPC: "https://arb1.arbitrum.io/rpc", Explorer: "https://arbiscan.io"},
+		{ID: 10, Name: "Optimism", Symbol: "ETH", RPC: "https://mainnet.optimism.io", Explorer: "https://optimistic.etherscan.io"},
+		{ID: 8453, Name: "Base", Symbol: "ETH", RPC: "https://mainnet.base.org", Explorer: "https://basescan.org"},
+		{ID: 56, Name: "BSC", Symbol: "BNB", RPC: "https://bsc-dataseed.binance.org", Explorer: "https://bscscan.com"},
+		{ID: 43114, Name: "Avalanche", Symbol: "AVAX", RPC: "https://api.avax.network/ext/bc/C/rpc", Explorer: "https://snowtrace.io"},
+	}
 }
 
 // OrderSide represents buy or sell

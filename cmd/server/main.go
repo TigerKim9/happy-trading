@@ -64,6 +64,16 @@ func main() {
 	// Admin page
 	mux.Handle("GET /admin/", http.StripPrefix("/admin/", http.FileServer(http.Dir("web"))))
 
+	// Wallet
+	mux.HandleFunc("GET /api/wallet/chains", h.GetChains)
+	mux.HandleFunc("GET /api/wallet/nonce", h.GetNonce)
+	mux.HandleFunc("POST /api/wallet/login", h.WalletLogin)
+	mux.HandleFunc("GET /api/wallet/deposit-address", h.GetDepositAddress)
+	mux.HandleFunc("POST /api/wallet/deposit", h.RegisterDeposit)
+	mux.HandleFunc("GET /api/wallet/deposits", h.GetUserDeposits)
+	mux.HandleFunc("POST /api/wallet/withdraw", h.RequestWithdrawal)
+	mux.HandleFunc("GET /api/wallet/withdrawals", h.GetUserWithdrawals)
+
 	// CORS middleware
 	handler := corsMiddleware(mux)
 
