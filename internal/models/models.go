@@ -7,12 +7,14 @@ import (
 
 // Emotion represents a tradeable emotion
 type Emotion struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	NameKR      string  `json:"name_kr"`
-	Description string  `json:"description"`
-	BasePrice   float64 `json:"base_price"`
-	Category    string  `json:"category"` // basic, dark, chaotic
+	ID                string  `json:"id"`
+	Name              string  `json:"name"`
+	NameKR            string  `json:"name_kr"`
+	Description       string  `json:"description"`
+	BasePrice         float64 `json:"base_price"`
+	Category          string  `json:"category"`           // basic, dark, chaotic
+	TotalSupply       float64 `json:"total_supply"`       // 총 발행량 (0 = 무제한)
+	CirculatingSupply float64 `json:"circulating_supply"` // 현재 유통량
 }
 
 // User represents a trader
@@ -133,30 +135,30 @@ type OrderBook struct {
 // DefaultEmotions returns the list of tradeable emotions
 func DefaultEmotions() []Emotion {
 	return []Emotion{
-		// Basic emotions
-		{ID: "joy", Name: "Joy", NameKR: "기쁨", Description: "Pure, simple happiness", BasePrice: 100.0, Category: "basic"},
-		{ID: "happiness", Name: "Happiness", NameKR: "행복", Description: "Deep contentment and satisfaction", BasePrice: 150.0, Category: "basic"},
-		{ID: "sadness", Name: "Sadness", NameKR: "슬픔", Description: "Melancholy and sorrow", BasePrice: 80.0, Category: "basic"},
-		{ID: "anger", Name: "Anger", NameKR: "분노", Description: "Intense displeasure and hostility", BasePrice: 90.0, Category: "basic"},
-		{ID: "fear", Name: "Fear", NameKR: "공포", Description: "Anxiety and dread", BasePrice: 85.0, Category: "basic"},
-		{ID: "surprise", Name: "Surprise", NameKR: "놀람", Description: "Unexpected astonishment", BasePrice: 70.0, Category: "basic"},
+		// Basic emotions - 발행량 많음
+		{ID: "joy", Name: "Joy", NameKR: "기쁨", Description: "Pure, simple happiness", BasePrice: 100.0, Category: "basic", TotalSupply: 10000},
+		{ID: "happiness", Name: "Happiness", NameKR: "행복", Description: "Deep contentment and satisfaction", BasePrice: 150.0, Category: "basic", TotalSupply: 8000},
+		{ID: "sadness", Name: "Sadness", NameKR: "슬픔", Description: "Melancholy and sorrow", BasePrice: 80.0, Category: "basic", TotalSupply: 12000},
+		{ID: "anger", Name: "Anger", NameKR: "분노", Description: "Intense displeasure and hostility", BasePrice: 90.0, Category: "basic", TotalSupply: 10000},
+		{ID: "fear", Name: "Fear", NameKR: "공포", Description: "Anxiety and dread", BasePrice: 85.0, Category: "basic", TotalSupply: 9000},
+		{ID: "surprise", Name: "Surprise", NameKR: "놀람", Description: "Unexpected astonishment", BasePrice: 70.0, Category: "basic", TotalSupply: 15000},
 
-		// Dark emotions
-		{ID: "jealousy", Name: "Jealousy", NameKR: "질투", Description: "Envious resentment", BasePrice: 120.0, Category: "dark"},
-		{ID: "despair", Name: "Despair", NameKR: "절망", Description: "Complete loss of hope", BasePrice: 200.0, Category: "dark"},
-		{ID: "emptiness", Name: "Emptiness", NameKR: "허무", Description: "Void of meaning", BasePrice: 180.0, Category: "dark"},
-		{ID: "guilt", Name: "Guilt", NameKR: "죄책감", Description: "Remorse and self-blame", BasePrice: 110.0, Category: "dark"},
+		// Dark emotions - 발행량 중간
+		{ID: "jealousy", Name: "Jealousy", NameKR: "질투", Description: "Envious resentment", BasePrice: 120.0, Category: "dark", TotalSupply: 5000},
+		{ID: "despair", Name: "Despair", NameKR: "절망", Description: "Complete loss of hope", BasePrice: 200.0, Category: "dark", TotalSupply: 3000},
+		{ID: "emptiness", Name: "Emptiness", NameKR: "허무", Description: "Void of meaning", BasePrice: 180.0, Category: "dark", TotalSupply: 4000},
+		{ID: "guilt", Name: "Guilt", NameKR: "죄책감", Description: "Remorse and self-blame", BasePrice: 110.0, Category: "dark", TotalSupply: 6000},
 
-		// Chaotic emotions (발칙한 것들)
-		{ID: "impulse", Name: "Impulse", NameKR: "충동", Description: "Sudden uncontrollable urge", BasePrice: 250.0, Category: "chaotic"},
-		{ID: "desire", Name: "Desire", NameKR: "욕망", Description: "Intense wanting and craving", BasePrice: 300.0, Category: "chaotic"},
-		{ID: "madness", Name: "Madness", NameKR: "광기", Description: "Beautiful chaos of the mind", BasePrice: 500.0, Category: "chaotic"},
-		{ID: "greed", Name: "Greed", NameKR: "탐욕", Description: "Insatiable appetite for more", BasePrice: 350.0, Category: "chaotic"},
-		{ID: "lust", Name: "Lust", NameKR: "정욕", Description: "Overwhelming passionate desire", BasePrice: 400.0, Category: "chaotic"},
-		{ID: "rage", Name: "Rage", NameKR: "격노", Description: "Uncontrollable fury", BasePrice: 280.0, Category: "chaotic"},
-		{ID: "obsession", Name: "Obsession", NameKR: "집착", Description: "Fixation beyond reason", BasePrice: 320.0, Category: "chaotic"},
-		{ID: "euphoria", Name: "Euphoria", NameKR: "황홀", Description: "Transcendent ecstasy", BasePrice: 450.0, Category: "chaotic"},
-		{ID: "apathy", Name: "Apathy", NameKR: "무관심", Description: "Complete emotional detachment", BasePrice: 160.0, Category: "chaotic"},
-		{ID: "schadenfreude", Name: "Schadenfreude", NameKR: "남의불행", Description: "Pleasure from others' misfortune", BasePrice: 380.0, Category: "chaotic"},
+		// Chaotic emotions (발칙한 것들) - 발행량 적음 (희귀)
+		{ID: "impulse", Name: "Impulse", NameKR: "충동", Description: "Sudden uncontrollable urge", BasePrice: 250.0, Category: "chaotic", TotalSupply: 2000},
+		{ID: "desire", Name: "Desire", NameKR: "욕망", Description: "Intense wanting and craving", BasePrice: 300.0, Category: "chaotic", TotalSupply: 1500},
+		{ID: "madness", Name: "Madness", NameKR: "광기", Description: "Beautiful chaos of the mind", BasePrice: 500.0, Category: "chaotic", TotalSupply: 500},
+		{ID: "greed", Name: "Greed", NameKR: "탐욕", Description: "Insatiable appetite for more", BasePrice: 350.0, Category: "chaotic", TotalSupply: 1000},
+		{ID: "lust", Name: "Lust", NameKR: "정욕", Description: "Overwhelming passionate desire", BasePrice: 400.0, Category: "chaotic", TotalSupply: 800},
+		{ID: "rage", Name: "Rage", NameKR: "격노", Description: "Uncontrollable fury", BasePrice: 280.0, Category: "chaotic", TotalSupply: 1800},
+		{ID: "obsession", Name: "Obsession", NameKR: "집착", Description: "Fixation beyond reason", BasePrice: 320.0, Category: "chaotic", TotalSupply: 1200},
+		{ID: "euphoria", Name: "Euphoria", NameKR: "황홀", Description: "Transcendent ecstasy", BasePrice: 450.0, Category: "chaotic", TotalSupply: 600},
+		{ID: "apathy", Name: "Apathy", NameKR: "무관심", Description: "Complete emotional detachment", BasePrice: 160.0, Category: "chaotic", TotalSupply: 2500},
+		{ID: "schadenfreude", Name: "Schadenfreude", NameKR: "남의불행", Description: "Pleasure from others' misfortune", BasePrice: 380.0, Category: "chaotic", TotalSupply: 700},
 	}
 }

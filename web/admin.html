@@ -326,13 +326,14 @@
                         <th>한글명</th>
                         <th>카테고리</th>
                         <th>기준가</th>
+                        <th>발행량</th>
                         <th>설명</th>
                         <th>관리</th>
                     </tr>
                 </thead>
                 <tbody id="emotionTable">
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px;">로딩 중...</td>
+                        <td colspan="8" style="text-align: center; padding: 40px;">로딩 중...</td>
                     </tr>
                 </tbody>
             </table>
@@ -371,6 +372,10 @@
                 <div class="form-group">
                     <label for="emotionPrice">기준가</label>
                     <input type="number" id="emotionPrice" required min="1" step="0.01" placeholder="예: 100">
+                </div>
+                <div class="form-group">
+                    <label for="emotionSupply">발행량 (0 = 무제한)</label>
+                    <input type="number" id="emotionSupply" required min="0" step="1" placeholder="예: 10000">
                 </div>
                 <div class="form-group">
                     <label for="emotionDesc">설명</label>
@@ -423,7 +428,7 @@
             const tbody = document.getElementById('emotionTable');
 
             if (emotions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px;">등록된 감정이 없습니다</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;">등록된 감정이 없습니다</td></tr>';
                 return;
             }
 
@@ -434,6 +439,7 @@
                     <td>${emotion.name_kr}</td>
                     <td><span class="category-badge category-${emotion.category}">${getCategoryLabel(emotion.category)}</span></td>
                     <td>${emotion.base_price.toLocaleString()}</td>
+                    <td>${emotion.total_supply === 0 ? '무제한' : emotion.total_supply.toLocaleString()}</td>
                     <td>${emotion.description}</td>
                     <td>
                         <div class="actions">
@@ -481,6 +487,7 @@
             document.getElementById('emotionNameKr').value = emotion.name_kr;
             document.getElementById('emotionCategory').value = emotion.category;
             document.getElementById('emotionPrice').value = emotion.base_price;
+            document.getElementById('emotionSupply').value = emotion.total_supply || 0;
             document.getElementById('emotionDesc').value = emotion.description;
             document.getElementById('emotionModal').classList.add('active');
         }
@@ -499,6 +506,7 @@
                 name_kr: document.getElementById('emotionNameKr').value,
                 category: document.getElementById('emotionCategory').value,
                 base_price: parseFloat(document.getElementById('emotionPrice').value),
+                total_supply: parseFloat(document.getElementById('emotionSupply').value) || 0,
                 description: document.getElementById('emotionDesc').value
             };
 
